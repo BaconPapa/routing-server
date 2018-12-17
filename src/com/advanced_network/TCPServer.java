@@ -10,16 +10,14 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TCPServer {
+class TCPServer {
     private UDPServer udpServer;
     private ServerSocket tcpSocket;
     private List<TCPSocket> clientSocket;
     private boolean acceptable;
     private boolean sendable;
-    private OutputStream outputStream;
-    private PrintWriter printWriter;
 
-    public TCPServer(int udpPort, int tcpPort){
+    TCPServer(int udpPort, int tcpPort){
         try{
             this.udpServer = new UDPServer(udpPort);
             this.tcpSocket = new ServerSocket(tcpPort);
@@ -38,13 +36,13 @@ public class TCPServer {
             System.exit(0);
         }
     }
-    public void run() {
+    void run() {
         Thread t = new Thread(this::accept);
         t.start();
         while(sendable) {
             try{
                 DatagramPacket datagramPacket = udpServer.receivedPacket();
-                String received = new String(datagramPacket.getData(), Config.CHAR_SET);
+                String received = new String(datagramPacket.getData(), Config.CHAR_SET).trim();
                 System.out.printf(
                         "Receive packet from %s:%d\tcontent:%s\n",
                         datagramPacket.getAddress(),
@@ -73,12 +71,14 @@ public class TCPServer {
         }
     }
 
-    void BroadCastMessage(String message) {
+    private void BroadCastMessage(String message) {
         List<TCPSocket> updatedSocket = new LinkedList<>();
         for (TCPSocket socket :
                 this.clientSocket) {
            if (socket.enable()) {
                try{
+                   OutputStream outputStream;
+                   PrintWriter printWriter;
                    outputStream = socket.socket.getOutputStream();
                    printWriter = new PrintWriter(outputStream);
                    printWriter.println(message);
